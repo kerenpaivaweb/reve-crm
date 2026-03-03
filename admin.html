@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>CRM · Rêve Skincare</title>
+  <meta name="theme-color" content="#1A1714">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{
+      --bg:#FAF8F5; --card:#FFFFFF; --ink:#1A1714; --muted:#6f6a66; --rule:#281f11;
+      --accent:#B8705A; --ok:#2b7a44; --bad:#c05050;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --r: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);}
+    .topbar{position:sticky; top:0; z-index:10; backdrop-filter: blur(12px); background: rgba(250,248,245,.9);
+      border-bottom:1px solid var(--rule); padding: 14px 18px; display:flex; align-items:center; gap:12px;}
+    .brand{font-weight:700; letter-spacing:.02em}
+    .chip{margin-left:auto; display:flex; gap:10px; align-items:center;}
+    .chip .pill{border:1px solid rgba(40,31,17,.25); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); background:#fff;}
+    .btn{border:1px solid rgba(40,31,17,.25); background:#fff; color:var(--ink); padding:9px 12px; border-radius:12px; cursor:pointer; font-weight:600;}
+    .btn:hover{border-color: rgba(40,31,17,.55)}
+    .btn.primary{background: var(--ink); color:#fff; border-color: var(--ink);}
+    .btn.danger{background: #fff; color: var(--bad); border-color: rgba(192,80,80,.35);}
+    .btn.small{padding:7px 10px; border-radius:10px; font-size:12px;}
+    .container{max-width:1200px; margin: 0 auto; padding: 18px;}
+    .grid{display:grid; grid-template-columns: 360px 1fr; gap:14px;}
+    .card{background:var(--card); border:1px solid rgba(40,31,17,.14); border-radius: var(--r); box-shadow: var(--shadow);}
+    .card h3{margin:0; padding:16px 16px 10px; font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:var(--muted)}
+    .card .body{padding: 0 16px 16px;}
+    .input, textarea{width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(40,31,17,.18); background:#fff; font-size:14px; outline:none;}
+    textarea{min-height:180px; font-family: var(--mono); font-size:12px; line-height:1.4;}
+    .row{display:flex; gap:10px; align-items:center;}
+    .row > *{flex:1}
+    .muted{color:var(--muted)}
+    .sep{height:1px; background: rgba(40,31,17,.12); margin: 12px 0;}
+    .list{display:flex; flex-direction:column; gap:10px;}
+    .patient{display:flex; gap:10px; align-items:center; padding:10px; border-radius:14px; border:1px solid rgba(40,31,17,.12); cursor:pointer;}
+    .patient:hover{border-color: rgba(40,31,17,.35)}
+    .patient.active{border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,112,90,.12);}
+    .avatar{width:36px;height:36px;border-radius:12px;background: rgba(184,112,90,.15); display:grid; place-items:center; font-weight:800; color: var(--accent);}
+    .pmeta{min-width:0}
+    .pname{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .psub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .tabs{display:flex; gap:8px; padding: 0 16px 14px;}
+    .tab{padding:8px 10px; border-radius:999px; border:1px solid rgba(40,31,17,.14); background:#fff; font-size:12px; font-weight:700; cursor:pointer; color:var(--muted)}
+    .tab.active{border-color: var(--ink); color:var(--ink)}
+    .panel{display:none}
+    .panel.active{display:block}
+    table{width:100%; border-collapse: collapse; font-size:13px;}
+    th, td{border-bottom:1px solid rgba(40,31,17,.10); padding:10px 8px; vertical-align:top;}
+    th{text-align:left; color:var(--muted); font-weight:800; font-size:12px; letter-spacing:.03em; text-transform:uppercase;}
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(40,31,17,.18); background:#fff; color:var(--muted)}
+    .badge.ok{color:var(--ok); border-color: rgba(43,122,68,.28); background: rgba(43,122,68,.06)}
+    .badge.bad{color:var(--bad); border-color: rgba(192,80,80,.28); background: rgba(192,80,80,.06)}
+    .photo-grid{display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px;}
+    .photo{border:1px solid rgba(40,31,17,.12); border-radius:16px; overflow:hidden; background:#fff;}
+    .photo img{width:100%; height:140px; object-fit:cover; display:block;}
+    .photo .cap{padding:8px 10px; font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:8px;}
+    .toast{position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #fff; border:1px solid rgba(40,31,17,.18);
+      border-radius: 14px; box-shadow: var(--shadow); padding: 10px 12px; font-size: 13px; display:none; gap:10px; align-items:center;
+      max-width: min(560px, calc(100vw - 24px));}
+    .toast.show{display:flex}
+    .dot{width:10px; height:10px; border-radius:999px; background: var(--accent);}
+    .mono{font-family: var(--mono); font-size:12px;}
+    .login-wrap{max-width: 520px; margin: 7vh auto; padding: 0 18px;}
+    .login-card{padding:18px;}
+    .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.35;}
+    .hide{display:none!important;}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">CRM · Rêve Skincare</div>
+    <span class="badge" id="env-badge">offline</span>
+    <div class="chip">
+      <span class="pill" id="whoami">—</span>
+      <button class="btn small" id="logoutBtn">Sair</button>
+    </div>
+  </div>
+
+  <div class="login-wrap" id="loginWrap">
+    <div class="card login-card">
+      <h3>Entrar</h3>
+      <div class="body">
+        <div class="row">
+          <input class="input" id="email" placeholder="email" type="email" autocomplete="username">
+          <input class="input" id="password" placeholder="senha" type="password" autocomplete="current-password">
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="loginBtn">Entrar</button>
+          <button class="btn" id="resetBtn">Enviar reset</button>
+        </div>
+        <div class="hint">
+          Este painel usa Supabase Auth para login, e chama uma Function no Netlify para operações administrativas (com Service Role no servidor).
+          Se você entrar e aparecer "Acesso negado", é porque seu usuário ainda não foi cadastrado em <span class="mono">crm_admins</span>.
+        </div>
+        <div class="sep"></div>
+        <div class="muted mono" id="loginErr"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container hide" id="app">
+    <div class="grid">
+      <div class="card">
+        <h3>Pacientes</h3>
+        <div class="body">
+          <input class="input" id="search" placeholder="Buscar por nome / email…" />
+          <div class="sep"></div>
+          <div class="row">
+            <button class="btn small" id="refreshPatients">Atualizar</button>
+            <button class="btn small" id="newPatient">Novo</button>
+          </div>
+          <div class="sep"></div>
+          <div class="list" id="patientList"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 id="detailTitle">Detalhes</h3>
+        <div class="tabs">
+          <button class="tab active" data-tab="profile">Perfil</button>
+          <button class="tab" data-tab="plan">Plano</button>
+          <button class="tab" data-tab="diary">Diário</button>
+          <button class="tab" data-tab="photos">Fotos</button>
+        </div>
+        <div class="body">
+          <div class="panel active" id="panel-profile">
+            <div class="row">
+              <input class="input" id="p_name" placeholder="Nome completo" />
+              <input class="input" id="p_email" placeholder="Email" />
+            </div>
+            <div class="row" style="margin-top:10px">
+              <input class="input" id="p_phone" placeholder="Telefone" />
+              <input class="input" id="p_city" placeholder="Cidade" />
+            </div>
+            <div class="row" style="margin-top:10px">
+              <input class="input" id="p_birth" placeholder="Nascimento (YYYY-MM-DD)" />
+              <input class="input mono" id="p_userid" placeholder="user_id (uuid)" />
+            </div>
+            <div class="sep"></div>
+            <div class="row">
+              <button class="btn primary" id="saveProfile">Salvar perfil</button>
+              <button class="btn danger" id="deactivatePlans">Desativar planos</button>
+            </div>
+            <div class="hint" style="margin-top:10px">
+              Para vincular um paciente ao app, o <span class="mono">user_id</span> deve ser o mesmo do usuário no Supabase Auth.
+              Crie o usuário em Supabase (Auth → Users) e cole o uuid aqui.
+            </div>
+          </div>
+
+          <div class="panel" id="panel-plan">
+            <div class="row">
+              <input class="input" id="plan_title" placeholder="Título do plano" />
+              <span class="badge" id="plan_status">—</span>
+            </div>
+            <div class="sep"></div>
+            <textarea id="plan_json" spellcheck="false" placeholder='Cole/edite o JSON do plano aqui'></textarea>
+            <div class="sep"></div>
+            <div class="row">
+              <button class="btn primary" id="savePlan">Salvar plano</button>
+              <button class="btn" id="prettyJson">Formatar JSON</button>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-diary">
+            <div class="row">
+              <span class="badge" id="diary_badge">—</span>
+              <button class="btn small" id="refreshDiary">Atualizar</button>
+            </div>
+            <div class="sep"></div>
+            <h4 class="muted" style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.03em;">Checklist</h4>
+            <div style="overflow:auto">
+              <table id="checklistTable">
+                <thead><tr><th>Key</th><th>Marcado</th><th>Atualizado</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="sep"></div>
+            <h4 class="muted" style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.03em;">Notas</h4>
+            <div style="overflow:auto">
+              <table id="notesTable">
+                <thead><tr><th>ID</th><th>Conteúdo</th><th>Atualizado</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-photos">
+            <div class="row">
+              <span class="badge" id="photos_badge">—</span>
+              <button class="btn small" id="refreshPhotos">Atualizar</button>
+            </div>
+            <div class="sep"></div>
+            <div class="photo-grid" id="photoGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><span class="dot"></span><span id="toastText">—</span></div>
+
+<script>
+const CONFIG = {
+  SUPABASE_URL:  "https://SEU_PROJETO.supabase.co",
+  SUPABASE_ANON: "SUA_PUBLIC_ANON_KEY",
+  CRM_FN: "/.netlify/functions/crm"
+};
+
+let sb = null;
+let session = null;
+let selected = null;
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 2400);
+}
+
+function setEnvBadge(ok){
+  const b = document.getElementById('env-badge');
+  b.textContent = ok ? 'online' : 'offline';
+  b.classList.toggle('ok', ok);
+  b.classList.toggle('bad', !ok);
+}
+
+function initSupabase(){
+  if (!window.supabase?.createClient) return null;
+  if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON) return null;
+  return window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON);
+}
+
+async function callCrm(op, body = {}){
+  if (!session?.access_token) throw new Error("Sem sessão");
+  const res = await fetch(`${CONFIG.CRM_FN}?op=${encodeURIComponent(op)}`, {
+    method: "POST",
+    headers: {
+      "content-type":"application/json",
+      "authorization": `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(()=> ({}));
+  if (!res.ok) throw new Error(data?.error || `Erro ${res.status}`);
+  return data;
+}
+
+function initials(name){
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '—';
+  return parts.slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+function setSelected(patient){
+  selected = patient;
+  document.querySelectorAll('.patient').forEach(el=>{
+    el.classList.toggle('active', el.dataset.id === patient.user_id);
+  });
+  document.getElementById('detailTitle').textContent = `Detalhes · ${patient.full_name || '—'}`;
+
+  document.getElementById('p_userid').value = patient.user_id || '';
+  document.getElementById('p_name').value  = patient.full_name || '';
+  document.getElementById('p_email').value = patient.email || '';
+  document.getElementById('p_phone').value = patient.phone || '';
+  document.getElementById('p_city').value  = patient.city || '';
+  document.getElementById('p_birth').value = patient.birth_date || '';
+
+  refreshPlan();
+  refreshDiary();
+  refreshPhotos();
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p=> p.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=> switchTab(t.dataset.tab)));
+
+async function updateAuthState(){
+  const u = session?.user;
+  document.getElementById('whoami').textContent = u ? (u.email || u.id) : '—';
+  document.getElementById('logoutBtn').style.display = u ? 'inline-flex' : 'none';
+  document.getElementById('loginWrap').classList.toggle('hide', !!u);
+  document.getElementById('app').classList.toggle('hide', !u);
+
+  if (u) {
+    try {
+      await callCrm('ping', {});
+      setEnvBadge(true);
+      await loadPatients();
+    } catch (e) {
+      setEnvBadge(false);
+      document.getElementById('loginErr').textContent = String(e.message || e);
+      toast("Acesso negado ou function offline");
+    }
+  }
+}
+
+async function doLogin(){
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  document.getElementById('loginErr').textContent = '';
+  if (!email || !password) return toast("Preencha email e senha");
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { document.getElementById('loginErr').textContent = error.message; return; }
+  session = data.session;
+  await updateAuthState();
+}
+
+async function doReset(){
+  const email = document.getElementById('email').value.trim();
+  document.getElementById('loginErr').textContent = '';
+  if (!email) return toast("Digite o email");
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  if (error) document.getElementById('loginErr').textContent = error.message;
+  else toast("Reset enviado (se o email existir)");
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  session = null;
+  selected = null;
+  document.getElementById('patientList').innerHTML = '';
+  await updateAuthState();
+}
+
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('resetBtn').addEventListener('click', doReset);
+document.getElementById('logoutBtn').addEventListener('click', doLogout);
+document.getElementById('password').addEventListener('keydown', (e)=>{ if(e.key==='Enter') doLogin(); });
+
+async function loadPatients(){
+  const q = document.getElementById('search').value.trim();
+  const data = await callCrm('patients_list', { q });
+  const list = document.getElementById('patientList');
+  list.innerHTML = '';
+  (data.patients || []).forEach(p=>{
+    const div = document.createElement('div');
+    div.className = 'patient';
+    div.dataset.id = p.user_id;
+    div.innerHTML = `
+      <div class="avatar">${initials(p.full_name)}</div>
+      <div class="pmeta">
+        <div class="pname">${escapeHtml(p.full_name || '—')}</div>
+        <div class="psub">${escapeHtml(p.email || p.user_id || '')}</div>
+      </div>`;
+    div.addEventListener('click', ()=> setSelected(p));
+    list.appendChild(div);
+  });
+  if (!selected && (data.patients || []).length) setSelected(data.patients[0]);
+}
+
+document.getElementById('search').addEventListener('input', debounce(()=> loadPatients().catch(e=>toast(e.message)), 350));
+document.getElementById('refreshPatients').addEventListener('click', ()=> loadPatients().catch(e=>toast(e.message)));
+
+document.getElementById('newPatient').addEventListener('click', ()=>{
+  selected = { user_id:'', full_name:'', email:'', phone:'', city:'', birth_date:'' };
+  document.querySelectorAll('.patient').forEach(el=> el.classList.remove('active'));
+  document.getElementById('detailTitle').textContent = `Detalhes · Novo`;
+  document.getElementById('p_userid').value = '';
+  document.getElementById('p_name').value  = '';
+  document.getElementById('p_email').value = '';
+  document.getElementById('p_phone').value = '';
+  document.getElementById('p_city').value  = '';
+  document.getElementById('p_birth').value = '';
+  document.getElementById('plan_title').value = '';
+  document.getElementById('plan_json').value = '';
+  document.getElementById('plan_status').textContent = '—';
+  document.getElementById('diary_badge').textContent = '—';
+  document.getElementById('photos_badge').textContent = '—';
+  document.querySelector('#checklistTable tbody').innerHTML = '';
+  document.querySelector('#notesTable tbody').innerHTML = '';
+  document.getElementById('photoGrid').innerHTML = '';
+});
+
+document.getElementById('saveProfile').addEventListener('click', async ()=>{
+  try{
+    const payload = {
+      user_id: document.getElementById('p_userid').value.trim(),
+      full_name: document.getElementById('p_name').value.trim(),
+      email: document.getElementById('p_email').value.trim(),
+      phone: document.getElementById('p_phone').value.trim(),
+      city: document.getElementById('p_city').value.trim(),
+      birth_date: document.getElementById('p_birth').value.trim() || null,
+    };
+    if (!payload.user_id) return toast("Preencha user_id (uuid)");
+    if (!payload.full_name) return toast("Preencha nome");
+    await callCrm('patient_upsert', payload);
+    toast("Perfil salvo");
+    await loadPatients();
+  }catch(e){ toast(e.message); }
+});
+
+document.getElementById('deactivatePlans').addEventListener('click', async ()=>{
+  try{
+    const user_id = document.getElementById('p_userid').value.trim();
+    if (!user_id) return toast("Selecione um paciente");
+    await callCrm('plans_deactivate', { user_id });
+    toast("Planos desativados");
+    await refreshPlan();
+  }catch(e){ toast(e.message); }
+});
+
+async function refreshPlan(){
+  const user_id = document.getElementById('p_userid').value.trim();
+  if (!user_id) return;
+  const data = await callCrm('plan_get_active', { user_id });
+  const plan = data.plan;
+  const status = document.getElementById('plan_status');
+  if (!plan) {
+    status.textContent = 'Sem plano ativo';
+    status.className = 'badge';
+    document.getElementById('plan_title').value = '';
+    document.getElementById('plan_json').value = '';
+    return;
+  }
+  status.textContent = plan.is_active ? 'Ativo' : 'Inativo';
+  status.className = `badge ${plan.is_active ? 'ok':'bad'}`;
+  document.getElementById('plan_title').value = plan.title || 'Plano';
+  document.getElementById('plan_json').value = JSON.stringify(plan.content || {}, null, 2);
+}
+
+document.getElementById('savePlan').addEventListener('click', async ()=>{
+  try{
+    const user_id = document.getElementById('p_userid').value.trim();
+    if (!user_id) return toast("Selecione um paciente");
+    const title = document.getElementById('plan_title').value.trim() || 'Plano';
+    const raw = document.getElementById('plan_json').value.trim() || '{}';
+    let content;
+    try { content = JSON.parse(raw); } catch { return toast("JSON inválido"); }
+    await callCrm('plan_save_active', { user_id, title, content });
+    toast("Plano salvo");
+    await refreshPlan();
+  }catch(e){ toast(e.message); }
+});
+
+document.getElementById('prettyJson').addEventListener('click', ()=>{
+  try{
+    const raw = document.getElementById('plan_json').value.trim() || '{}';
+    document.getElementById('plan_json').value = JSON.stringify(JSON.parse(raw), null, 2);
+  }catch{ toast("JSON inválido"); }
+});
+
+async function refreshDiary(){
+  const user_id = document.getElementById('p_userid').value.trim();
+  if (!user_id) return;
+  const data = await callCrm('diary_get', { user_id });
+  const cl = data.checklist || [];
+  const notes = data.notes || [];
+  document.getElementById('diary_badge').textContent = `${cl.length} checklist · ${notes.length} notas`;
+  document.getElementById('diary_badge').className = 'badge ok';
+
+  const tb1 = document.querySelector('#checklistTable tbody');
+  tb1.innerHTML = '';
+  cl.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="mono">${escapeHtml(r.key)}</td><td>${r.checked ? '✅' : '—'}</td><td class="mono">${escapeHtml(r.updated_at || '')}</td>`;
+    tb1.appendChild(tr);
+  });
+
+  const tb2 = document.querySelector('#notesTable tbody');
+  tb2.innerHTML = '';
+  notes.forEach(r=>{
+    const tr = document.createElement('tr');
+    const short = (r.content || '').slice(0, 220).replace(/\n/g,' ');
+    tr.innerHTML = `<td class="mono">${escapeHtml(r.note_id)}</td><td>${escapeHtml(short)}</td><td class="mono">${escapeHtml(r.updated_at || '')}</td>`;
+    tb2.appendChild(tr);
+  });
+}
+document.getElementById('refreshDiary').addEventListener('click', ()=> refreshDiary().catch(e=>toast(e.message)));
+
+async function refreshPhotos(){
+  const user_id = document.getElementById('p_userid').value.trim();
+  if (!user_id) return;
+  const data = await callCrm('photos_get', { user_id });
+  const photos = data.photos || [];
+  document.getElementById('photos_badge').textContent = `${photos.length} fotos`;
+  document.getElementById('photos_badge').className = 'badge ok';
+
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  photos.forEach(p=>{
+    const div = document.createElement('div');
+    div.className = 'photo';
+    div.innerHTML = `
+      <a href="${escapeAttr(p.public_url)}" target="_blank" rel="noreferrer">
+        <img src="${escapeAttr(p.public_url)}" alt="">
+      </a>
+      <div class="cap">
+        <span class="mono">${escapeHtml(p.photo_key || '')}</span>
+        <span>${escapeHtml(p.updated_at ? p.updated_at.slice(0,10) : '')}</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+document.getElementById('refreshPhotos').addEventListener('click', ()=> refreshPhotos().catch(e=>toast(e.message)));
+
+function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+(async ()=>{
+  sb = initSupabase();
+  setEnvBadge(!!sb);
+  if (!sb) { document.getElementById('loginErr').textContent = "Configure SUPABASE_URL e SUPABASE_ANON no admin.html"; return; }
+  const { data } = await sb.auth.getSession();
+  session = data?.session || null;
+  sb.auth.onAuthStateChange((_event, s)=>{ session = s; updateAuthState(); });
+  await updateAuthState();
+})();
+</script>
+</body>
+</html>
