@@ -1,521 +1,251 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>CRM · Rêve Skincare</title>
-  <meta name="theme-color" content="#1A1714">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <style>
-    :root{
-      --bg:#FAF8F5; --card:#FFFFFF; --ink:#1A1714; --muted:#6f6a66; --rule:#281f11;
-      --accent:#B8705A; --ok:#2b7a44; --bad:#c05050;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --r: 18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);}
-    .topbar{position:sticky; top:0; z-index:10; backdrop-filter: blur(12px); background: rgba(250,248,245,.9);
-      border-bottom:1px solid var(--rule); padding: 14px 18px; display:flex; align-items:center; gap:12px;}
-    .brand{font-weight:700; letter-spacing:.02em}
-    .chip{margin-left:auto; display:flex; gap:10px; align-items:center;}
-    .chip .pill{border:1px solid rgba(40,31,17,.25); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); background:#fff;}
-    .btn{border:1px solid rgba(40,31,17,.25); background:#fff; color:var(--ink); padding:9px 12px; border-radius:12px; cursor:pointer; font-weight:600;}
-    .btn:hover{border-color: rgba(40,31,17,.55)}
-    .btn.primary{background: var(--ink); color:#fff; border-color: var(--ink);}
-    .btn.danger{background: #fff; color: var(--bad); border-color: rgba(192,80,80,.35);}
-    .btn.small{padding:7px 10px; border-radius:10px; font-size:12px;}
-    .container{max-width:1200px; margin: 0 auto; padding: 18px;}
-    .grid{display:grid; grid-template-columns: 360px 1fr; gap:14px;}
-    .card{background:var(--card); border:1px solid rgba(40,31,17,.14); border-radius: var(--r); box-shadow: var(--shadow);}
-    .card h3{margin:0; padding:16px 16px 10px; font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:var(--muted)}
-    .card .body{padding: 0 16px 16px;}
-    .input, textarea{width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(40,31,17,.18); background:#fff; font-size:14px; outline:none;}
-    textarea{min-height:180px; font-family: var(--mono); font-size:12px; line-height:1.4;}
-    .row{display:flex; gap:10px; align-items:center;}
-    .row > *{flex:1}
-    .muted{color:var(--muted)}
-    .sep{height:1px; background: rgba(40,31,17,.12); margin: 12px 0;}
-    .list{display:flex; flex-direction:column; gap:10px;}
-    .patient{display:flex; gap:10px; align-items:center; padding:10px; border-radius:14px; border:1px solid rgba(40,31,17,.12); cursor:pointer;}
-    .patient:hover{border-color: rgba(40,31,17,.35)}
-    .patient.active{border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,112,90,.12);}
-    .avatar{width:36px;height:36px;border-radius:12px;background: rgba(184,112,90,.15); display:grid; place-items:center; font-weight:800; color: var(--accent);}
-    .pmeta{min-width:0}
-    .pname{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .psub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .tabs{display:flex; gap:8px; padding: 0 16px 14px;}
-    .tab{padding:8px 10px; border-radius:999px; border:1px solid rgba(40,31,17,.14); background:#fff; font-size:12px; font-weight:700; cursor:pointer; color:var(--muted)}
-    .tab.active{border-color: var(--ink); color:var(--ink)}
-    .panel{display:none}
-    .panel.active{display:block}
-    table{width:100%; border-collapse: collapse; font-size:13px;}
-    th, td{border-bottom:1px solid rgba(40,31,17,.10); padding:10px 8px; vertical-align:top;}
-    th{text-align:left; color:var(--muted); font-weight:800; font-size:12px; letter-spacing:.03em; text-transform:uppercase;}
-    .badge{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(40,31,17,.18); background:#fff; color:var(--muted)}
-    .badge.ok{color:var(--ok); border-color: rgba(43,122,68,.28); background: rgba(43,122,68,.06)}
-    .badge.bad{color:var(--bad); border-color: rgba(192,80,80,.28); background: rgba(192,80,80,.06)}
-    .photo-grid{display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px;}
-    .photo{border:1px solid rgba(40,31,17,.12); border-radius:16px; overflow:hidden; background:#fff;}
-    .photo img{width:100%; height:140px; object-fit:cover; display:block;}
-    .photo .cap{padding:8px 10px; font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:8px;}
-    .toast{position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #fff; border:1px solid rgba(40,31,17,.18);
-      border-radius: 14px; box-shadow: var(--shadow); padding: 10px 12px; font-size: 13px; display:none; gap:10px; align-items:center;
-      max-width: min(560px, calc(100vw - 24px));}
-    .toast.show{display:flex}
-    .dot{width:10px; height:10px; border-radius:999px; background: var(--accent);}
-    .mono{font-family: var(--mono); font-size:12px;}
-    .login-wrap{max-width: 520px; margin: 7vh auto; padding: 0 18px;}
-    .login-card{padding:18px;}
-    .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.35;}
-    .hide{display:none!important;}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Rêve · Admin</title>
+<meta name="theme-color" content="#F5EFE6"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --cream:#F5EFE6;--cream2:#EDE5D8;--sand:#D4C4AD;--terracota:#B8705A;--terra-dk:#9A5A46;
+  --ink:#1E1710;--ink2:#3D3228;--muted:#7A6E64;--muted2:#A89E94;--white:#FEFCF9;
+  --green:#4A7C5E;--red:#B85252;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;
+  --r:16px;--r-sm:10px;
+  --shadow:0 2px 20px rgba(30,23,16,.08),0 1px 4px rgba(30,23,16,.04);
+  --shadow-lg:0 8px 40px rgba(30,23,16,.12),0 2px 8px rgba(30,23,16,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink);min-height:100dvh;-webkit-font-smoothing:antialiased}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(245,239,230,.88);backdrop-filter:blur(18px) saturate(180%);border-bottom:1px solid var(--sand);padding:0 20px;height:58px;display:flex;align-items:center;gap:14px}
+.logo{font-family:var(--serif);font-size:22px;font-weight:400;letter-spacing:.06em;color:var(--ink);flex-shrink:0}
+.logo em{font-style:italic;color:var(--terracota)}
+.topbar-mid{flex:1}
+.env-dot{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+.env-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--muted2);transition:background .3s}
+.env-dot.online::before{background:var(--green)}
+.env-dot.offline::before{background:var(--red)}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.who{font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:500;padding:8px 14px;border-radius:var(--r-sm);border:1px solid var(--sand);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.btn.primary:hover{background:var(--ink2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+.btn.danger{color:var(--red);border-color:rgba(184,82,82,.25)}
+.btn.danger:hover{background:rgba(184,82,82,.06)}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:default}
+.input{width:100%;font-family:var(--sans);font-size:14px;padding:10px 13px;background:var(--white);border:1px solid var(--sand);border-radius:var(--r-sm);color:var(--ink);outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--terracota)}
+.input::placeholder{color:var(--muted2)}
+textarea.input{min-height:200px;resize:vertical;font-family:monospace;font-size:12px;line-height:1.5}
+.page{max-width:1280px;margin:0 auto;padding:20px 16px}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--cream2);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.card-head{padding:16px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-family:var(--serif);font-size:18px;font-weight:400;letter-spacing:.02em;color:var(--ink)}
+.card-body{padding:14px 18px 18px}
+.sep{height:1px;background:var(--cream2);margin:14px 0}
+.patient-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:all .15s;position:relative}
+.patient-item:hover{background:var(--cream);border-color:var(--cream2)}
+.patient-item.active{background:rgba(184,112,90,.06);border-color:rgba(184,112,90,.3)}
+.patient-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;border-radius:2px;background:var(--terracota)}
+.avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--cream2),var(--sand));display:grid;place-items:center;font-family:var(--serif);font-size:16px;font-weight:600;color:var(--terracota);flex-shrink:0}
+.p-name{font-size:14px;font-weight:500;color:var(--ink);line-height:1.3}
+.p-sub{font-size:12px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.p-stats{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.stat-pill{font-size:11px;color:var(--muted);background:var(--cream);border:1px solid var(--cream2);border-radius:999px;padding:2px 7px}
+.stat-pill.has{color:var(--green);background:rgba(74,124,94,.07);border-color:rgba(74,124,94,.2)}
+.tabs-row{display:flex;gap:4px;padding:14px 18px 0;border-bottom:1px solid var(--cream2)}
+.tab-btn{font-family:var(--sans);font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:1px solid var(--cream2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;position:relative;bottom:-1px}
+.tab-btn:hover{color:var(--ink2)}
+.tab-btn.active{color:var(--terracota);background:var(--white);border-color:var(--cream2);border-bottom-color:var(--white)}
+.panel{display:none;padding:18px}
+.panel.active{display:block}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid var(--sand);background:var(--white);color:var(--muted)}
+.badge.ok{color:var(--green);border-color:rgba(74,124,94,.3);background:rgba(74,124,94,.06)}
+.badge.bad{color:var(--red);border-color:rgba(184,82,82,.3);background:rgba(184,82,82,.06)}
+.badge.accent{color:var(--terracota);border-color:rgba(184,112,90,.3);background:rgba(184,112,90,.06)}
+.diary-section h4{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted2);border-bottom:1px solid var(--cream2)}
+td{padding:10px;border-bottom:1px solid var(--cream);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.mono{font-family:monospace;font-size:12px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.photo-card{border:1px solid var(--cream2);border-radius:12px;overflow:hidden;background:var(--cream);transition:box-shadow .2s}
+.photo-card:hover{box-shadow:var(--shadow-lg)}
+.photo-card img{width:100%;height:130px;object-fit:cover;display:block}
+.photo-card .ph-cap{padding:8px 10px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.login-page{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(184,112,90,.12),transparent),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(212,196,173,.3),transparent),var(--cream)}
+.login-logo{font-family:var(--serif);font-size:48px;font-weight:300;letter-spacing:.12em;color:var(--ink);margin-bottom:6px}
+.login-logo em{font-style:italic;color:var(--terracota)}
+.login-sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:40px}
+.login-card{width:100%;max-width:380px}
+.login-field{margin-bottom:12px}
+.login-field label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.login-err{font-size:12px;color:var(--red);margin-top:10px;min-height:16px}
+.login-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:16px}
+.empty{text-align:center;padding:48px 24px;color:var(--muted2)}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.empty-text{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--muted)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);font-size:13px;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-lg);display:none;align-items:center;gap:8px;white-space:nowrap;z-index:999;animation:fadeUp .2s ease}
+.toast.show{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.hide{display:none!important}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.col{display:flex;flex-direction:column;gap:10px}
+.scroll-x{overflow-x:auto}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.summary-box{background:var(--cream);border:1px solid var(--cream2);border-radius:12px;padding:12px 14px;text-align:center}
+.summary-num{font-family:var(--serif);font-size:28px;font-weight:400;color:var(--terracota);line-height:1}
+.summary-label{font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap .input{padding-left:36px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted2);pointer-events:none}
+.lbl{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+</style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">CRM · Rêve Skincare</div>
-    <span class="badge" id="env-badge">offline</span>
-    <div class="chip">
-      <span class="pill" id="whoami">—</span>
-      <button class="btn small" id="logoutBtn">Sair</button>
+<div class="topbar">
+  <div class="logo">Rê<em>ve</em></div>
+  <div class="topbar-mid"><span class="env-dot" id="envDot">offline</span></div>
+  <div class="topbar-right">
+    <span class="who" id="whoami"></span>
+    <button class="btn sm" id="logoutBtn" style="display:none">Sair</button>
+  </div>
+</div>
+<div class="login-page" id="loginPage">
+  <div class="login-logo">Rê<em>ve</em></div>
+  <div class="login-sub">Painel Administrativo</div>
+  <div class="card login-card">
+    <div class="card-body" style="padding:24px">
+      <div class="login-field"><label>Email</label><input class="input" id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="username"/></div>
+      <div class="login-field"><label>Senha</label><input class="input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" id="loginBtn">Entrar</button>
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-hint">Acesso restrito a administradoras cadastradas.</div>
     </div>
   </div>
-
-  <div class="login-wrap" id="loginWrap">
-    <div class="card login-card">
-      <h3>Entrar</h3>
-      <div class="body">
-        <div class="row">
-          <input class="input" id="email" placeholder="email" type="email" autocomplete="username">
-          <input class="input" id="password" placeholder="senha" type="password" autocomplete="current-password">
+</div>
+<div class="page hide" id="appPage">
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Pacientes</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn sm" id="newPatientBtn">+ Nova</button>
+            <button class="btn sm ghost" id="refreshBtn">↻</button>
+          </div>
         </div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn primary" id="loginBtn">Entrar</button>
-          <button class="btn" id="resetBtn">Enviar reset</button>
+        <div class="card-body">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input class="input" id="searchInput" placeholder="Buscar paciente…"/></div>
+          <div id="patientList" class="col" style="gap:4px"></div>
         </div>
-        <div class="hint">
-          Este painel usa Supabase Auth para login, e chama uma Function no Netlify para operações administrativas (com Service Role no servidor).
-          Se você entrar e aparecer "Acesso negado", é porque seu usuário ainda não foi cadastrado em <span class="mono">crm_admins</span>.
+      </div>
+    </div>
+    <div class="card" id="detailCard">
+      <div class="card-head" style="padding-bottom:0">
+        <span class="card-title" id="detailTitle" style="font-size:22px">Selecione uma paciente</span>
+        <span class="badge" id="activePlanBadge" style="display:none"></span>
+      </div>
+      <div class="tabs-row">
+        <button class="tab-btn active" data-tab="profile">Perfil</button>
+        <button class="tab-btn" data-tab="plan">Plano</button>
+        <button class="tab-btn" data-tab="diary">Diário</button>
+        <button class="tab-btn" data-tab="photos">Fotos</button>
+      </div>
+      <div class="panel active" id="panel-profile">
+        <div class="summary-grid" id="summaryGrid" style="display:none">
+          <div class="summary-box"><div class="summary-num" id="sum-checklist">—</div><div class="summary-label">Checklist</div></div>
+          <div class="summary-box"><div class="summary-num" id="sum-notes">—</div><div class="summary-label">Notas</div></div>
+          <div class="summary-box"><div class="summary-num" id="sum-photos">—</div><div class="summary-label">Fotos</div></div>
+          <div class="summary-box"><div class="summary-num" id="sum-plan">—</div><div class="summary-label">Plano</div></div>
         </div>
+        <div class="col">
+          <div class="row"><div><label class="lbl">Nome completo</label><input class="input" id="p_name" placeholder="Nome completo"/></div><div><label class="lbl">Email</label><input class="input" id="p_email" placeholder="email@exemplo.com"/></div></div>
+          <div class="row"><div><label class="lbl">Telefone</label><input class="input" id="p_phone" placeholder="(00) 00000-0000"/></div><div><label class="lbl">Cidade</label><input class="input" id="p_city" placeholder="Cidade"/></div></div>
+          <div class="row"><div><label class="lbl">Nascimento</label><input class="input" id="p_birth" placeholder="AAAA-MM-DD"/></div><div><label class="lbl">User ID</label><input class="input mono" id="p_userid" placeholder="uuid Supabase Auth"/></div></div>
+          <div class="sep" style="margin:4px 0"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn primary" id="saveProfileBtn">Salvar perfil</button>
+            <button class="btn danger" id="deactivatePlansBtn">Desativar planos</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="panel-plan">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+          <input class="input" id="planTitle" placeholder="Título do plano" style="flex:1"/>
+          <span class="badge" id="planStatus">—</span>
+        </div>
+        <textarea class="input" id="planJson" placeholder='{ "etapas": [], "observações": "" }'></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn primary" id="savePlanBtn">Salvar plano</button>
+          <button class="btn" id="prettyBtn">Formatar JSON</button>
+        </div>
+      </div>
+      <div class="panel" id="panel-diary">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+          <span class="badge" id="diaryBadge">—</span>
+          <button class="btn sm ghost" id="refreshDiaryBtn">↻ Atualizar</button>
+        </div>
+        <div class="diary-section"><h4>Checklist do Protocolo</h4><div class="scroll-x"><table id="checklistTable"><thead><tr><th>Item</th><th>Status</th><th>Data</th></tr></thead><tbody></tbody></table></div></div>
         <div class="sep"></div>
-        <div class="muted mono" id="loginErr"></div>
+        <div class="diary-section"><h4>Notas da Paciente</h4><div class="scroll-x"><table id="notesTable"><thead><tr><th>ID</th><th>Conteúdo</th><th>Data</th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+      <div class="panel" id="panel-photos">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+          <span class="badge" id="photosBadge">—</span>
+          <button class="btn sm ghost" id="refreshPhotosBtn">↻ Atualizar</button>
+        </div>
+        <div class="photo-grid" id="photoGrid"></div>
+        <div class="empty hide" id="photosEmpty"><div class="empty-icon">📷</div><div class="empty-text">Nenhuma foto enviada ainda</div></div>
       </div>
     </div>
   </div>
-
-  <div class="container hide" id="app">
-    <div class="grid">
-      <div class="card">
-        <h3>Pacientes</h3>
-        <div class="body">
-          <input class="input" id="search" placeholder="Buscar por nome / email…" />
-          <div class="sep"></div>
-          <div class="row">
-            <button class="btn small" id="refreshPatients">Atualizar</button>
-            <button class="btn small" id="newPatient">Novo</button>
-          </div>
-          <div class="sep"></div>
-          <div class="list" id="patientList"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 id="detailTitle">Detalhes</h3>
-        <div class="tabs">
-          <button class="tab active" data-tab="profile">Perfil</button>
-          <button class="tab" data-tab="plan">Plano</button>
-          <button class="tab" data-tab="diary">Diário</button>
-          <button class="tab" data-tab="photos">Fotos</button>
-        </div>
-        <div class="body">
-          <div class="panel active" id="panel-profile">
-            <div class="row">
-              <input class="input" id="p_name" placeholder="Nome completo" />
-              <input class="input" id="p_email" placeholder="Email" />
-            </div>
-            <div class="row" style="margin-top:10px">
-              <input class="input" id="p_phone" placeholder="Telefone" />
-              <input class="input" id="p_city" placeholder="Cidade" />
-            </div>
-            <div class="row" style="margin-top:10px">
-              <input class="input" id="p_birth" placeholder="Nascimento (YYYY-MM-DD)" />
-              <input class="input mono" id="p_userid" placeholder="user_id (uuid)" />
-            </div>
-            <div class="sep"></div>
-            <div class="row">
-              <button class="btn primary" id="saveProfile">Salvar perfil</button>
-              <button class="btn danger" id="deactivatePlans">Desativar planos</button>
-            </div>
-            <div class="hint" style="margin-top:10px">
-              Para vincular um paciente ao app, o <span class="mono">user_id</span> deve ser o mesmo do usuário no Supabase Auth.
-              Crie o usuário em Supabase (Auth → Users) e cole o uuid aqui.
-            </div>
-          </div>
-
-          <div class="panel" id="panel-plan">
-            <div class="row">
-              <input class="input" id="plan_title" placeholder="Título do plano" />
-              <span class="badge" id="plan_status">—</span>
-            </div>
-            <div class="sep"></div>
-            <textarea id="plan_json" spellcheck="false" placeholder='Cole/edite o JSON do plano aqui'></textarea>
-            <div class="sep"></div>
-            <div class="row">
-              <button class="btn primary" id="savePlan">Salvar plano</button>
-              <button class="btn" id="prettyJson">Formatar JSON</button>
-            </div>
-          </div>
-
-          <div class="panel" id="panel-diary">
-            <div class="row">
-              <span class="badge" id="diary_badge">—</span>
-              <button class="btn small" id="refreshDiary">Atualizar</button>
-            </div>
-            <div class="sep"></div>
-            <h4 class="muted" style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.03em;">Checklist</h4>
-            <div style="overflow:auto">
-              <table id="checklistTable">
-                <thead><tr><th>Key</th><th>Marcado</th><th>Atualizado</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-            <div class="sep"></div>
-            <h4 class="muted" style="margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.03em;">Notas</h4>
-            <div style="overflow:auto">
-              <table id="notesTable">
-                <thead><tr><th>ID</th><th>Conteúdo</th><th>Atualizado</th></tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="panel" id="panel-photos">
-            <div class="row">
-              <span class="badge" id="photos_badge">—</span>
-              <button class="btn small" id="refreshPhotos">Atualizar</button>
-            </div>
-            <div class="sep"></div>
-            <div class="photo-grid" id="photoGrid"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"><span class="dot"></span><span id="toastText">—</span></div>
+</div>
+<div class="toast" id="toast"></div>
 
 <script>
-const CONFIG = {
-  SUPABASE_URL:  "https://ypqzfswpncqdklyzvxyg.supabase.co",
-  SUPABASE_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXpmc3dwbmNxZGtseXp2eHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MDAxMDMsImV4cCI6MjA4ODA3NjEwM30.kVdERqLi-e2t1XEHALfl05Pb7wSRuCKTAG7Vi-uG2kc",
-  CRM_FN: "/.netlify/functions/crm"
-};
-
-let sb = null;
-let session = null;
-let selected = null;
-
-function toast(msg){
-  const el = document.getElementById('toast');
-  document.getElementById('toastText').textContent = msg;
-  el.classList.add('show');
-  setTimeout(()=> el.classList.remove('show'), 2400);
-}
-
-function setEnvBadge(ok){
-  const b = document.getElementById('env-badge');
-  b.textContent = ok ? 'online' : 'offline';
-  b.classList.toggle('ok', ok);
-  b.classList.toggle('bad', !ok);
-}
-
-function initSupabase(){
-  if (!window.supabase?.createClient) return null;
-  if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON) return null;
-  return window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON);
-}
-
-async function callCrm(op, body = {}){
-  if (!session?.access_token) throw new Error("Sem sessão");
-  const res = await fetch(`${CONFIG.CRM_FN}?op=${encodeURIComponent(op)}`, {
-    method: "POST",
-    headers: {
-      "content-type":"application/json",
-      "authorization": `Bearer ${session.access_token}`
-    },
-    body: JSON.stringify(body)
-  });
-  const data = await res.json().catch(()=> ({}));
-  if (!res.ok) throw new Error(data?.error || `Erro ${res.status}`);
-  return data;
-}
-
-function initials(name){
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '—';
-  return parts.slice(0,2).map(p=>p[0]).join('').toUpperCase();
-}
-
-function setSelected(patient){
-  selected = patient;
-  document.querySelectorAll('.patient').forEach(el=>{
-    el.classList.toggle('active', el.dataset.id === patient.user_id);
-  });
-  document.getElementById('detailTitle').textContent = `Detalhes · ${patient.full_name || '—'}`;
-
-  document.getElementById('p_userid').value = patient.user_id || '';
-  document.getElementById('p_name').value  = patient.full_name || '';
-  document.getElementById('p_email').value = patient.email || '';
-  document.getElementById('p_phone').value = patient.phone || '';
-  document.getElementById('p_city').value  = patient.city || '';
-  document.getElementById('p_birth').value = patient.birth_date || '';
-
-  refreshPlan();
-  refreshDiary();
-  refreshPhotos();
-}
-
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.panel').forEach(p=> p.classList.remove('active'));
-  document.getElementById(`panel-${tab}`).classList.add('active');
-}
-document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=> switchTab(t.dataset.tab)));
-
-async function updateAuthState(){
-  const u = session?.user;
-  document.getElementById('whoami').textContent = u ? (u.email || u.id) : '—';
-  document.getElementById('logoutBtn').style.display = u ? 'inline-flex' : 'none';
-  document.getElementById('loginWrap').classList.toggle('hide', !!u);
-  document.getElementById('app').classList.toggle('hide', !u);
-
-  if (u) {
-    try {
-      await callCrm('ping', {});
-      setEnvBadge(true);
-      await loadPatients();
-    } catch (e) {
-      setEnvBadge(false);
-      document.getElementById('loginErr').textContent = String(e.message || e);
-      toast("Acesso negado ou function offline");
-    }
-  }
-}
-
-async function doLogin(){
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  document.getElementById('loginErr').textContent = '';
-  if (!email || !password) return toast("Preencha email e senha");
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) { document.getElementById('loginErr').textContent = error.message; return; }
-  session = data.session;
-  await updateAuthState();
-}
-
-async function doReset(){
-  const email = document.getElementById('email').value.trim();
-  document.getElementById('loginErr').textContent = '';
-  if (!email) return toast("Digite o email");
-  const { error } = await sb.auth.resetPasswordForEmail(email);
-  if (error) document.getElementById('loginErr').textContent = error.message;
-  else toast("Reset enviado (se o email existir)");
-}
-
-async function doLogout(){
-  await sb.auth.signOut();
-  session = null;
-  selected = null;
-  document.getElementById('patientList').innerHTML = '';
-  await updateAuthState();
-}
-
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('resetBtn').addEventListener('click', doReset);
-document.getElementById('logoutBtn').addEventListener('click', doLogout);
-document.getElementById('password').addEventListener('keydown', (e)=>{ if(e.key==='Enter') doLogin(); });
-
-async function loadPatients(){
-  const q = document.getElementById('search').value.trim();
-  const data = await callCrm('patients_list', { q });
-  const list = document.getElementById('patientList');
-  list.innerHTML = '';
-  (data.patients || []).forEach(p=>{
-    const div = document.createElement('div');
-    div.className = 'patient';
-    div.dataset.id = p.user_id;
-    div.innerHTML = `
-      <div class="avatar">${initials(p.full_name)}</div>
-      <div class="pmeta">
-        <div class="pname">${escapeHtml(p.full_name || '—')}</div>
-        <div class="psub">${escapeHtml(p.email || p.user_id || '')}</div>
-      </div>`;
-    div.addEventListener('click', ()=> setSelected(p));
-    list.appendChild(div);
-  });
-  if (!selected && (data.patients || []).length) setSelected(data.patients[0]);
-}
-
-document.getElementById('search').addEventListener('input', debounce(()=> loadPatients().catch(e=>toast(e.message)), 350));
-document.getElementById('refreshPatients').addEventListener('click', ()=> loadPatients().catch(e=>toast(e.message)));
-
-document.getElementById('newPatient').addEventListener('click', ()=>{
-  selected = { user_id:'', full_name:'', email:'', phone:'', city:'', birth_date:'' };
-  document.querySelectorAll('.patient').forEach(el=> el.classList.remove('active'));
-  document.getElementById('detailTitle').textContent = `Detalhes · Novo`;
-  document.getElementById('p_userid').value = '';
-  document.getElementById('p_name').value  = '';
-  document.getElementById('p_email').value = '';
-  document.getElementById('p_phone').value = '';
-  document.getElementById('p_city').value  = '';
-  document.getElementById('p_birth').value = '';
-  document.getElementById('plan_title').value = '';
-  document.getElementById('plan_json').value = '';
-  document.getElementById('plan_status').textContent = '—';
-  document.getElementById('diary_badge').textContent = '—';
-  document.getElementById('photos_badge').textContent = '—';
-  document.querySelector('#checklistTable tbody').innerHTML = '';
-  document.querySelector('#notesTable tbody').innerHTML = '';
-  document.getElementById('photoGrid').innerHTML = '';
-});
-
-document.getElementById('saveProfile').addEventListener('click', async ()=>{
-  try{
-    const payload = {
-      user_id: document.getElementById('p_userid').value.trim(),
-      full_name: document.getElementById('p_name').value.trim(),
-      email: document.getElementById('p_email').value.trim(),
-      phone: document.getElementById('p_phone').value.trim(),
-      city: document.getElementById('p_city').value.trim(),
-      birth_date: document.getElementById('p_birth').value.trim() || null,
-    };
-    if (!payload.user_id) return toast("Preencha user_id (uuid)");
-    if (!payload.full_name) return toast("Preencha nome");
-    await callCrm('patient_upsert', payload);
-    toast("Perfil salvo");
-    await loadPatients();
-  }catch(e){ toast(e.message); }
-});
-
-document.getElementById('deactivatePlans').addEventListener('click', async ()=>{
-  try{
-    const user_id = document.getElementById('p_userid').value.trim();
-    if (!user_id) return toast("Selecione um paciente");
-    await callCrm('plans_deactivate', { user_id });
-    toast("Planos desativados");
-    await refreshPlan();
-  }catch(e){ toast(e.message); }
-});
-
-async function refreshPlan(){
-  const user_id = document.getElementById('p_userid').value.trim();
-  if (!user_id) return;
-  const data = await callCrm('plan_get_active', { user_id });
-  const plan = data.plan;
-  const status = document.getElementById('plan_status');
-  if (!plan) {
-    status.textContent = 'Sem plano ativo';
-    status.className = 'badge';
-    document.getElementById('plan_title').value = '';
-    document.getElementById('plan_json').value = '';
-    return;
-  }
-  status.textContent = plan.is_active ? 'Ativo' : 'Inativo';
-  status.className = `badge ${plan.is_active ? 'ok':'bad'}`;
-  document.getElementById('plan_title').value = plan.title || 'Plano';
-  document.getElementById('plan_json').value = JSON.stringify(plan.content || {}, null, 2);
-}
-
-document.getElementById('savePlan').addEventListener('click', async ()=>{
-  try{
-    const user_id = document.getElementById('p_userid').value.trim();
-    if (!user_id) return toast("Selecione um paciente");
-    const title = document.getElementById('plan_title').value.trim() || 'Plano';
-    const raw = document.getElementById('plan_json').value.trim() || '{}';
-    let content;
-    try { content = JSON.parse(raw); } catch { return toast("JSON inválido"); }
-    await callCrm('plan_save_active', { user_id, title, content });
-    toast("Plano salvo");
-    await refreshPlan();
-  }catch(e){ toast(e.message); }
-});
-
-document.getElementById('prettyJson').addEventListener('click', ()=>{
-  try{
-    const raw = document.getElementById('plan_json').value.trim() || '{}';
-    document.getElementById('plan_json').value = JSON.stringify(JSON.parse(raw), null, 2);
-  }catch{ toast("JSON inválido"); }
-});
-
-async function refreshDiary(){
-  const user_id = document.getElementById('p_userid').value.trim();
-  if (!user_id) return;
-  const data = await callCrm('diary_get', { user_id });
-  const cl = data.checklist || [];
-  const notes = data.notes || [];
-  document.getElementById('diary_badge').textContent = `${cl.length} checklist · ${notes.length} notas`;
-  document.getElementById('diary_badge').className = 'badge ok';
-
-  const tb1 = document.querySelector('#checklistTable tbody');
-  tb1.innerHTML = '';
-  cl.forEach(r=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="mono">${escapeHtml(r.key)}</td><td>${r.checked ? '✅' : '—'}</td><td class="mono">${escapeHtml(r.updated_at || '')}</td>`;
-    tb1.appendChild(tr);
-  });
-
-  const tb2 = document.querySelector('#notesTable tbody');
-  tb2.innerHTML = '';
-  notes.forEach(r=>{
-    const tr = document.createElement('tr');
-    const short = (r.content || '').slice(0, 220).replace(/\n/g,' ');
-    tr.innerHTML = `<td class="mono">${escapeHtml(r.note_id)}</td><td>${escapeHtml(short)}</td><td class="mono">${escapeHtml(r.updated_at || '')}</td>`;
-    tb2.appendChild(tr);
-  });
-}
-document.getElementById('refreshDiary').addEventListener('click', ()=> refreshDiary().catch(e=>toast(e.message)));
-
-async function refreshPhotos(){
-  const user_id = document.getElementById('p_userid').value.trim();
-  if (!user_id) return;
-  const data = await callCrm('photos_get', { user_id });
-  const photos = data.photos || [];
-  document.getElementById('photos_badge').textContent = `${photos.length} fotos`;
-  document.getElementById('photos_badge').className = 'badge ok';
-
-  const grid = document.getElementById('photoGrid');
-  grid.innerHTML = '';
-  photos.forEach(p=>{
-    const div = document.createElement('div');
-    div.className = 'photo';
-    div.innerHTML = `
-      <a href="${escapeAttr(p.public_url)}" target="_blank" rel="noreferrer">
-        <img src="${escapeAttr(p.public_url)}" alt="">
-      </a>
-      <div class="cap">
-        <span class="mono">${escapeHtml(p.photo_key || '')}</span>
-        <span>${escapeHtml(p.updated_at ? p.updated_at.slice(0,10) : '')}</span>
-      </div>`;
-    grid.appendChild(div);
-  });
-}
-document.getElementById('refreshPhotos').addEventListener('click', ()=> refreshPhotos().catch(e=>toast(e.message)));
-
-function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
-function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
-function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
-
-(async ()=>{
-  sb = initSupabase();
-  setEnvBadge(!!sb);
-  if (!sb) { document.getElementById('loginErr').textContent = "Configure SUPABASE_URL e SUPABASE_ANON no admin.html"; return; }
-  const { data } = await sb.auth.getSession();
-  session = data?.session || null;
-  sb.auth.onAuthStateChange((_event, s)=>{ session = s; updateAuthState(); });
-  await updateAuthState();
-})();
+const CONFIG={SUPABASE_URL:"https://ypqzfswpncqdklyzvxyg.supabase.co",SUPABASE_ANON:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXpmc3dwbmNxZGtseXp2eHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MDAxMDMsImV4cCI6MjA4ODA3NjEwM30.kVdERqLi-e2t1XEHALfl05Pb7wSRuCKTAG7Vi-uG2kc",CRM_FN:"/.netlify/functions/crm"};
+let sb=null,session=null,selected=null;
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function $$(id){return document.getElementById(id);}
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+function initials(n){return(n||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase()||'?';}
+function toast(msg,isErr=false){const el=$$('toast');el.textContent=msg;el.style.background=isErr?'var(--red)':'var(--ink)';el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
+function setEnv(ok){const d=$$('envDot');d.textContent=ok?'online':'offline';d.className='env-dot '+(ok?'online':'offline');}
+function initSb(){return window.supabase?.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON)||null;}
+async function callCrm(op,body={}){if(!session?.access_token)throw new Error('Sem sessão');const res=await fetch(CONFIG.CRM_FN+'?op='+encodeURIComponent(op),{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+session.access_token},body:JSON.stringify(body)});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data?.error||'Erro '+res.status);return data;}
+async function updateAuth(){const u=session?.user;$$('whoami').textContent=u?.email||'';$$('logoutBtn').style.display=u?'inline-flex':'none';$$('loginPage').classList.toggle('hide',!!u);$$('appPage').classList.toggle('hide',!u);if(u){try{await callCrm('ping');setEnv(true);await loadPatients();}catch(e){setEnv(false);toast(e.message,true);}}}
+$$('loginBtn').addEventListener('click',async()=>{const email=$$('loginEmail').value.trim();const pass=$$('loginPass').value;$$('loginErr').textContent='';if(!email||!pass)return toast('Preencha email e senha');const{data,error}=await sb.auth.signInWithPassword({email,password:pass});if(error){$$('loginErr').textContent=error.message;return;}session=data.session;await updateAuth();});
+$$('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')$$('loginBtn').click();});
+$$('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();session=null;selected=null;$$('patientList').innerHTML='';await updateAuth();});
+async function loadPatients(){const q=$$('searchInput').value.trim();const data=await callCrm('patients_list',{q});const list=$$('patientList');list.innerHTML='';(data.patients||[]).forEach(p=>{const el=document.createElement('div');el.className='patient-item'+(selected?.user_id===p.user_id?' active':'');el.dataset.id=p.user_id;const cl_done=p.checklist_done??0;const cl_total=p.checklist_total??0;const notes=p.notes_count??0;const photos=p.photos_count??0;el.innerHTML='<div class="avatar">'+esc(initials(p.full_name))+'</div><div style="min-width:0;flex:1"><div class="p-name">'+esc(p.full_name||'—')+'</div><div class="p-sub">'+esc(p.email||p.user_id||'')+'</div><div class="p-stats">'+(cl_total?'<span class="stat-pill '+(cl_done>0?'has':'')+'">'+(cl_done)+'/'+cl_total+' ✓</span>':'')+(notes?'<span class="stat-pill has">'+notes+' 📝</span>':'')+(photos?'<span class="stat-pill has">'+photos+' 📷</span>':'')+(p.has_active_plan?'<span class="stat-pill has">plano ativo</span>':'')+'</div></div>';el.addEventListener('click',()=>selectPatient(p));list.appendChild(el);});if(!selected&&(data.patients||[]).length)selectPatient(data.patients[0]);}
+$$('searchInput').addEventListener('input',debounce(()=>loadPatients().catch(e=>toast(e.message,true)),350));
+$$('refreshBtn').addEventListener('click',()=>loadPatients().catch(e=>toast(e.message,true)));
+$$('newPatientBtn').addEventListener('click',()=>{selected={user_id:'',full_name:'',email:'',phone:'',city:'',birth_date:''};document.querySelectorAll('.patient-item').forEach(el=>el.classList.remove('active'));$$('detailTitle').textContent='Nova Paciente';$$('activePlanBadge').style.display='none';$$('summaryGrid').style.display='none';['p_userid','p_name','p_email','p_phone','p_city','p_birth','planTitle','planJson'].forEach(id=>$$(id).value='');$$('planStatus').textContent='—';$$('planStatus').className='badge';$$('diaryBadge').textContent='—';$$('photosBadge').textContent='—';document.querySelector('#checklistTable tbody').innerHTML='';document.querySelector('#notesTable tbody').innerHTML='';$$('photoGrid').innerHTML='';switchTab('profile');});
+function selectPatient(p){selected=p;document.querySelectorAll('.patient-item').forEach(el=>el.classList.toggle('active',el.dataset.id===p.user_id));$$('detailTitle').textContent=p.full_name||'—';if(p.checklist_total!=null){$$('summaryGrid').style.display='grid';$$('sum-checklist').textContent=(p.checklist_done??0)+'/'+(p.checklist_total??0);$$('sum-notes').textContent=p.notes_count??0;$$('sum-photos').textContent=p.photos_count??0;$$('sum-plan').textContent=p.has_active_plan?'✓':'—';}if(p.has_active_plan){$$('activePlanBadge').textContent=p.active_plan_title||'Plano ativo';$$('activePlanBadge').className='badge ok';$$('activePlanBadge').style.display='inline-flex';}else{$$('activePlanBadge').style.display='none';}$$('p_userid').value=p.user_id||'';$$('p_name').value=p.full_name||'';$$('p_email').value=p.email||'';$$('p_phone').value=p.phone||'';$$('p_city').value=p.city||'';$$('p_birth').value=p.birth_date||'';refreshPlan();refreshDiary();refreshPhotos();}
+function switchTab(t){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$$('panel-'+t).classList.add('active');}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+$$('saveProfileBtn').addEventListener('click',async()=>{try{const payload={user_id:$$('p_userid').value.trim(),full_name:$$('p_name').value.trim(),email:$$('p_email').value.trim(),phone:$$('p_phone').value.trim(),city:$$('p_city').value.trim(),birth_date:$$('p_birth').value.trim()||null};if(!payload.user_id)return toast('Preencha o User ID');if(!payload.full_name)return toast('Preencha o nome');await callCrm('patient_upsert',payload);toast('Perfil salvo ✓');await loadPatients();}catch(e){toast(e.message,true);}});
+$$('deactivatePlansBtn').addEventListener('click',async()=>{try{const id=$$('p_userid').value.trim();if(!id)return toast('Selecione uma paciente');await callCrm('plans_deactivate',{user_id:id});toast('Planos desativados');await refreshPlan();}catch(e){toast(e.message,true);}});
+async function refreshPlan(){const id=$$('p_userid').value.trim();if(!id)return;const data=await callCrm('plan_get_active',{user_id:id});const plan=data.plan;const st=$$('planStatus');if(!plan){st.textContent='Sem plano ativo';st.className='badge';$$('planTitle').value='';$$('planJson').value='';return;}st.textContent=plan.is_active?'Ativo':'Inativo';st.className='badge '+(plan.is_active?'ok':'bad');$$('planTitle').value=plan.title||'Plano';$$('planJson').value=JSON.stringify(plan.content||{},null,2);}
+$$('savePlanBtn').addEventListener('click',async()=>{try{const id=$$('p_userid').value.trim();if(!id)return toast('Selecione uma paciente');const title=$$('planTitle').value.trim()||'Plano';let content;try{content=JSON.parse($$('planJson').value.trim()||'{}');}catch{return toast('JSON inválido',true);}await callCrm('plan_save_active',{user_id:id,title,content});toast('Plano salvo ✓');await refreshPlan();await loadPatients();}catch(e){toast(e.message,true);}});
+$$('prettyBtn').addEventListener('click',()=>{try{$$('planJson').value=JSON.stringify(JSON.parse($$('planJson').value.trim()||'{}'),null,2);}catch{toast('JSON inválido',true);}});
+async function refreshDiary(){const id=$$('p_userid').value.trim();if(!id)return;const data=await callCrm('diary_get',{user_id:id});const cl=data.checklist||[],notes=data.notes||[];$$('diaryBadge').textContent=cl.length+' itens · '+notes.length+' notas';$$('diaryBadge').className='badge ok';const tb1=document.querySelector('#checklistTable tbody');tb1.innerHTML='';cl.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML='<td class="mono">'+esc(r.key)+'</td><td>'+(r.checked?'<span class="badge ok" style="padding:2px 8px">✓ feito</span>':'<span class="badge" style="padding:2px 8px">pendente</span>')+'</td><td class="mono" style="color:var(--muted2)">'+esc((r.updated_at||'').slice(0,10))+'</td>';tb1.appendChild(tr);});const tb2=document.querySelector('#notesTable tbody');tb2.innerHTML='';notes.forEach(r=>{const tr=document.createElement('tr');const short=(r.content||'').slice(0,200).replace(/\n/g,' ');tr.innerHTML='<td class="mono" style="color:var(--muted);white-space:nowrap">'+esc(r.note_id)+'</td><td>'+esc(short)+'</td><td class="mono" style="color:var(--muted2);white-space:nowrap">'+esc((r.updated_at||'').slice(0,10))+'</td>';tb2.appendChild(tr);});}
+$$('refreshDiaryBtn').addEventListener('click',()=>refreshDiary().catch(e=>toast(e.message,true)));
+async function refreshPhotos(){const id=$$('p_userid').value.trim();if(!id)return;const data=await callCrm('photos_get',{user_id:id});const photos=data.photos||[];$$('photosBadge').textContent=photos.length+' foto'+(photos.length!==1?'s':'');$$('photosBadge').className='badge'+(photos.length?'':' bad');const grid=$$('photoGrid');grid.innerHTML='';$$('photosEmpty').classList.toggle('hide',photos.length>0);photos.forEach(p=>{const div=document.createElement('div');div.className='photo-card';div.innerHTML='<a href="'+esc(p.public_url)+'" target="_blank" rel="noreferrer"><img src="'+esc(p.public_url)+'" alt="foto" loading="lazy"/></a><div class="ph-cap"><span class="mono">'+esc(p.photo_key||'')+'</span><span style="color:var(--muted2)">'+esc((p.updated_at||'').slice(0,10))+'</span></div>';grid.appendChild(div);});}
+$$('refreshPhotosBtn').addEventListener('click',()=>refreshPhotos().catch(e=>toast(e.message,true)));
+(async()=>{sb=initSb();setEnv(!!sb);if(!sb){$$('loginErr').textContent='Erro: configuração ausente.';return;}const{data}=await sb.auth.getSession();session=data?.session||null;sb.auth.onAuthStateChange((_,s)=>{session=s;updateAuth();});await updateAuth();})();
 </script>
 </body>
 </html>
